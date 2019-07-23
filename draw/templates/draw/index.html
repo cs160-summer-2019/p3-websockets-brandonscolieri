@@ -24,13 +24,86 @@
     var canvas = document.getElementById('myCanvas');
     paper.setup(canvas);
     var tool = new paper.Tool();
+  
+    function randomHexIndex() {
+       return Math.floor(Math.random() * 16);   
+     };
+  
+    function randomHexCode() {
+      var hex = '0123456789ABCDEF'
+      var hexCode = '#'
+      for (i = 0; i < 6; i++) {
+        hexCode += hex[randomHexIndex()]
+      };
+      return hexCode
+    };
+  
+    function isSmall() {
+      return url.indexOf("small") != -1;
+    }
 
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
+    var socket = new WebSocket('wss://p3-websockets-brandonscolieri-brandonscolieri709720.codeanyapp.com/ws/draw');   
+    var userID = randomHexCode() // A random hexcode ID that serves as both the userID and userPenColor
+    var usersDict = {}
 
-    // var socket = new WebSocket(
-    //     'wss://<your url here>/ws/draw');
-
+    tool.onMouseMove = function(event) {
+      var newUser = {
+        userID: userID,
+        x: event.point.x,
+        y: event.point.y,
+      };
+        socket.send(JSON.stringify(newUser));
+        console.log('POSITION A NEW USER ON MOUSEMOVE');
+    };
+  
+  socket.onmessage = function(userJsonString) {
+    console.log('POSITION B ONMESSAGE');
+    var currentUser = JSON.parse(userJsonString.data);
+    var point;
+    var currentUserID = currentUser.userID;
+    console.log(currentUserID);
+    if (isSmall()) { //OH help
+      console.log(url.indexOf("small"));
+      console.log('POSITION C SMALL WINDOW');
+        if (currentUserID == userID) {
+          console.log('POSITION D CURRERNTUSERID == USERID');
+            if (!(currentUserID in usersDict)) {
+              console.log('POSITION E CURRERNTUSERID NOT IN USERSDICT');
+                var newPath = new paper.Path();
+                point = new paper.Point(currentUser.x, currentUser.y);
+                usersDict[currentUserID] = newPath;
+                usersDict[currentUserID].strokeColor = currentUserID; // UID == Hex Color ie serves double meaning
+                usersDict[currentUserID].strokeWidth = 10;
+                usersDict[currentUserID].add(point);
+            } else {
+              console.log('POSITION F');
+                usersDict[currentUserID].strokeColor = currentUser.userID;
+                usersDict[currentUserID].strokeWidth = 10;
+                point = new paper.Point(currentUser.x, currentUser.y);
+                usersDict[currentUserID].add(point);
+            }
+        }
+    } else {
+      console.log('POSITION G');
+        if (!(currentUserID in usersDict)) {
+            var newPath = new paper.Path()
+//             console.log(newPath);
+//             console.log(usersDict[currentUserID]);
+            usersDict[currentUserID] = newPath;
+//             console.log(usersDict[currentUserID]);
+        };
+      console.log('POSITION H');
+        usersDict[currentUserID].strokeColor = currentUser.userID;
+        usersDict[currentUserID].strokeWidth = 10;
+        point = new paper.Point(currentUser.x, currentUser.y);
+        usersDict[currentUserID].add(point);
+//         continueUserUpdate()
+    };
+};
+  
+  
 
 </script>
 </html>
